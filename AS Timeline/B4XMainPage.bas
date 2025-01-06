@@ -45,8 +45,18 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	
 	AS_Timeline1.CreateTimeline
 	
+	
 End Sub
 
 Private Sub AS_Timeline1_SelectionChanged(Item As AS_Timeline_Item)
 	xlbl_SelectedValue.Text = Item.Value
+End Sub
+
+
+Private Sub AS_Timeline1_CustomDrawItem(Item As AS_Timeline_Item,Views As AS_Timeline_CustomDrawItemViews)
+	If Item.Index > AS_Timeline1.Index Then
+		Views.xpnl_Round.Color = xui.Color_Green
+	Else
+		Views.xpnl_Round.Color = AS_Timeline1.g_ItemProperties.ReachedColor
+	End If
 End Sub

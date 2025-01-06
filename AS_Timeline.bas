@@ -4,6 +4,16 @@ ModulesStructureVersion=1
 Type=Class
 Version=9.8
 @EndOfDesignText@
+#If Documentation
+Updates
+V1.00
+	-Release
+V1.01
+	-Add Event CustomDrawItem
+	-Add get and set Index
+V1.02
+	-New set IndexByValue - Selects the item which value is passed
+#End If
 
 #DesignerProperty: Key: UnReachedColor, DisplayName: UnReachedColor, FieldType: Color, DefaultValue: 0xFFCFDCDC
 #DesignerProperty: Key: ReachedColor, DisplayName: ReachedColor, FieldType: Color, DefaultValue: 0xFFCFDCDC
@@ -12,11 +22,13 @@ Version=9.8
 #DesignerProperty: Key: AutoPlayInterval, DisplayName: Auto Play Interval, FieldType: Int, DefaultValue: 4000, MinRange: 0
 
 #Event: SelectionChanged(Item As AS_Timeline_Item)
+#Event: CustomDrawItem(Item As AS_Timeline_Item,Views As AS_Timeline_CustomDrawItemViews)
 
 Sub Class_Globals
 	
-	Type AS_Timeline_Item(DataYear As String,DataInfo As String,Value As Object,Duration As Int,ItemProperties As AS_Timeline_ItemProperties)
+	Type AS_Timeline_Item(DataYear As String,DataInfo As String,Value As Object,Duration As Int,Index As Int,ItemProperties As AS_Timeline_ItemProperties)
 	Type AS_Timeline_ItemProperties(UnReachedColor As Int,ReachedColor As Int,UnReachedFont As B4XFont,ReachedFont As B4XFont)
+	Type AS_Timeline_CustomDrawItemViews(xpnl_Background As B4XView,xpnl_Line As B4XView,xpnl_CanvasLine As B4XView,xpnl_Round As B4XView,xlbl_DataYear As B4XView,xlbl_DataInfo As B4XView)
 	
 	Dim g_ItemProperties As AS_Timeline_ItemProperties
 	
@@ -101,6 +113,7 @@ Public Sub AddItem(DataYear As String,DataInfo As String,Value As Object)
 	Item.Value = Value
 	Item.DataYear = DataYear
 	Item.DataInfo = DataInfo
+	Item.Index = lst_Items.Size
 	
 	lst_Items.Add(Item)
 	
@@ -120,6 +133,7 @@ Public Sub AddItemDuration(DataYear As String,DataInfo As String,Value As Object
 	Item.DataYear = DataYear
 	Item.DataInfo = DataInfo
 	Item.Duration = AutoPlayDuration
+	Item.Index = lst_Items.Size
 	
 	lst_Items.Add(Item)
 	
@@ -204,6 +218,17 @@ Public Sub CreateTimeline
 		xpnl_Sector.AddView(xlbl_DataInfo,WidthBetween/2 - 50dip/2,xpnl_Round.Top - xpnl_Round.Height - 50dip,WidthBetween,50dip)
 		#End If
 		
+		Dim Views As AS_Timeline_CustomDrawItemViews
+		Views.Initialize
+		Views.xpnl_Background = xpnl_Sector
+		Views.xpnl_Line = xpnl_Line
+		Views.xpnl_CanvasLine = xpnl_CanvasLine
+		Views.xpnl_Round = xpnl_Round
+		Views.xlbl_DataYear = xlbl_DataYear
+		Views.xlbl_DataInfo = xlbl_DataInfo
+		
+		CustomDrawItem(Item,Views)
+		
 	Next
 	
 End Sub
@@ -211,9 +236,12 @@ End Sub
 Private Sub SectorClicked(xpnl_TargetSector As B4XView)
 	Dim WidthBetween As Float = mBase.Width/(lst_Items.Size)
 	
+	m_Index = xpnl_TargetSector.tag
+	
 	For i = 0 To xpnl_Background.NumberOfViews -1
 		
 		Dim xpnl_Sector As B4XView = xpnl_Background.GetView(i)
+		Dim xpnl_Line As B4XView = xpnl_Sector.GetView(0)
 		Dim xpnl_CanvasLine As B4XView = xpnl_Sector.GetView(1)
 		Dim xpnl_Round As B4XView = xpnl_Sector.GetView(2)
 		
@@ -227,7 +255,6 @@ Private Sub SectorClicked(xpnl_TargetSector As B4XView)
 			If xpnl_TargetSector = xpnl_Sector Then
 				xpnl_CanvasLine.Width = WidthBetween/2  + IIf(i = (xpnl_Background.NumberOfViews-1),WidthBetween,0)
 				SelectionChanged(Item)
-				m_Index = i
 			Else
 				xpnl_CanvasLine.Width = WidthBetween
 			End If
@@ -242,10 +269,44 @@ Private Sub SectorClicked(xpnl_TargetSector As B4XView)
 			xlbl_DataInfo.Font = Item.ItemProperties.UnReachedFont
 		End If
 		
+		Dim Views As AS_Timeline_CustomDrawItemViews
+		Views.Initialize
+		Views.xpnl_Background = xpnl_Sector
+		Views.xpnl_Line = xpnl_Line
+		Views.xpnl_CanvasLine = xpnl_CanvasLine
+		Views.xpnl_Round = xpnl_Round
+		Views.xlbl_DataYear = xlbl_DataYear
+		Views.xlbl_DataInfo = xlbl_DataInfo
+		
+		CustomDrawItem(Item,Views)
+		
 	Next
 End Sub
 
 #Region Properties
+
+Public Sub setIndex(Index As Int)
+	m_Index = Index
+	SectorClicked(xpnl_Background.GetView(Index))
+End Sub
+
+Public Sub getIndex As Int
+	Return m_Index
+End Sub
+
+'Selects the item which value is passed
+Public Sub setIndexByValue(Value As Object)
+	
+	For i = 0 To lst_Items.Size -1
+		If lst_Items.Get(i).As(AS_Timeline_Item).Value = Value Then
+			m_Index = i
+			SectorClicked(xpnl_Background.GetView(m_Index))
+			Exit
+		End If
+	Next
+	
+End Sub
+
 'Starts the AutoPlay
 Public Sub StartAutoPlay
 	SectorClicked(xpnl_Background.GetView(m_Index))
@@ -337,6 +398,12 @@ End Sub
 Private Sub SelectionChanged(Item As AS_Timeline_Item)
 	If xui.SubExists(mCallBack, mEventName & "_SelectionChanged", 1) Then
 		CallSub2(mCallBack, mEventName & "_SelectionChanged",Item)
+	End If
+End Sub
+
+Private Sub CustomDrawItem(Item As AS_Timeline_Item,Views As AS_Timeline_CustomDrawItemViews)
+	If xui.SubExists(mCallBack, mEventName & "_CustomDrawItem", 2) Then
+		CallSub3(mCallBack, mEventName & "_CustomDrawItem",Item,Views)
 	End If
 End Sub
 
