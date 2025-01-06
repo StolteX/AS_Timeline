@@ -12,7 +12,7 @@ V1.01
 	-Add Event CustomDrawItem
 	-Add get and set Index
 V1.02
-	-New set IndexByValue - Selects the item which value is passed
+	-New SetIndexByValue - Selects the item which value is passed
 #End If
 
 #DesignerProperty: Key: UnReachedColor, DisplayName: UnReachedColor, FieldType: Color, DefaultValue: 0xFFCFDCDC
@@ -295,16 +295,17 @@ Public Sub getIndex As Int
 End Sub
 
 'Selects the item which value is passed
-Public Sub setIndexByValue(Value As Object)
+'Return True if the value was found
+Public Sub SetIndexByValue(Value As Object) As Boolean
 	
 	For i = 0 To lst_Items.Size -1
 		If lst_Items.Get(i).As(AS_Timeline_Item).Value = Value Then
 			m_Index = i
 			SectorClicked(xpnl_Background.GetView(m_Index))
-			Exit
+			Return True
 		End If
 	Next
-	
+	Return False
 End Sub
 
 'Starts the AutoPlay

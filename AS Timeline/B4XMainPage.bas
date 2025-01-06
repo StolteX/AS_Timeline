@@ -44,8 +44,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	AS_Timeline1.AddItem("2000","Google AdWords","Because organic search rankings take work.")
 	
 	AS_Timeline1.CreateTimeline
-	
-	
+
 End Sub
 
 Private Sub AS_Timeline1_SelectionChanged(Item As AS_Timeline_Item)
